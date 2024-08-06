@@ -979,12 +979,20 @@
                 timeRemaining = data.duration;
                 initTest();
                 userInput.focus();
-                alert('The test has been started by the admin!');
+                alert('The test has been started by the admin. Click OK to begin!');
+                startTest(); // Add this line to start the test after the alert
             } else {
                 console.error('Invalid data received from server:', data);
                 alert('An error occurred while starting the test. Please try again.');
             }
         });
+
+        function startTest() {
+            isTestActive = true;
+            startTime = new Date();
+            startTimer();
+            userInput.disabled = false;
+        }
 
         function updateTimeUnit() {
             const value = parseInt(timeInput.value) || 300;
@@ -1046,8 +1054,8 @@
             userInput.value = "";
             userInput.focus();
 
-            // Enable user input only when the test has started
-            userInput.disabled = !testStarted;
+            // Disable user input until the test starts
+            userInput.disabled = true;
 
             handleResponsiveLayout();
         }
@@ -1174,15 +1182,9 @@
         }
 
         function handleKeyDown(e) {
-            if (!testStarted) {
+            if (!testStarted || !isTestActive) {
                 e.preventDefault();
                 return;
-            }
-
-            if (!isTestActive && timeRemaining > 0) {
-                isTestActive = true;
-                startTime = new Date();
-                startTimer();
             }
 
             if (isTestActive && timeRemaining > 0) {
@@ -1243,6 +1245,9 @@
                 updateStats();
             }
         }
+
+
+
         userInput.disabled = true;
         function isWordNearBottom(wordElement) {
             const textDisplayRect = textDisplay.getBoundingClientRect();
