@@ -1,0 +1,44 @@
+<!-- public/admin.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+</head>
+
+<body>
+    <h1>Admin Panel</h1>
+    <textarea id="paragraphInput" rows="5" cols="50" placeholder="Enter test paragraph"></textarea>
+    <br>
+    <label for="durationInput">Test Duration (seconds):</label>
+    <input type="number" id="durationInput" min="10" max="3600" value="60">
+    <br>
+    <button id="startTestBtn">Start Test</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- public/admin.html -->
+    <script>
+        const socket = io();
+        const startTestBtn = document.getElementById('startTestBtn');
+        const paragraphInput = document.getElementById('paragraphInput');
+        const durationInput = document.getElementById('durationInput');
+
+        startTestBtn.addEventListener('click', () => {
+            const paragraph = paragraphInput.value.trim();
+            const duration = parseInt(durationInput.value);
+
+            if (paragraph && duration >= 10 && duration <= 3600) {
+                console.log('Emitting startTest event with data:', { paragraph, duration });
+                socket.emit('startTest', { paragraph, duration });
+                alert('Test started!');
+            } else {
+                alert('Please enter a valid paragraph and duration (10-3600 seconds).');
+            }
+        });
+    </script>
+
+</body>
+
+</html>
