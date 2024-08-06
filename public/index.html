@@ -921,7 +921,7 @@
         const errorsDisplay = document.getElementById("errors");
         const resetBtn = document.getElementById("reset-btn");
 
-
+        let lastCompletedWordPosition = 0;
         let timer;
         let timeRemaining;
         let currentText = "";
@@ -1000,6 +1000,7 @@
             correctWords = 0;
             incorrectWords = 0;
             typedWords = 0;
+            lastCompletedWordPosition = 0;
             textDisplay.scrollTop = 0;
             wpmDisplay.textContent = "0";
             errorsDisplay.textContent = "0";
@@ -1016,7 +1017,6 @@
 
             handleResponsiveLayout();
         }
-
 
         function updateTimerDisplay() {
             if (timeRemaining >= 3600) {
@@ -1325,6 +1325,8 @@
                     typedWords++;
                     typedCharacters += currentInputWord.length + 1;
 
+                    lastCompletedWordPosition = e.target.selectionStart;
+
                     currentWordIndex++;
                     if (currentWordIndex < words.length) {
                         wordElements[currentWordIndex - 1].classList.remove("current");
@@ -1355,7 +1357,6 @@
                 updateStats();
             }
         }
-
 
 
         userInput.disabled = true;
@@ -1392,6 +1393,16 @@
         }
 
         userInput.addEventListener("input", handleKeyDown);
+        userInput.addEventListener("keydown", function (e) {
+            if (!testStarted || !isTestActive) {
+                e.preventDefault();
+                return;
+            }
+
+            if (e.key === "Backspace" && e.target.selectionStart <= lastCompletedWordPosition) {
+                e.preventDefault();
+            }
+        });
 
 
         resetBtn.addEventListener("click", () => {
