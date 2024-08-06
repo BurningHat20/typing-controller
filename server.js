@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const { Pool } = require('pg');
 
 const app = express();
 const server = http.createServer(app);
@@ -11,6 +12,28 @@ const io = socketIo(server, {
     methods: ["GET", "POST"]
   }
 });
+
+// PostgreSQL connection
+const pool = new Pool({
+  connectionString: 'postgresql://neondb_owner:ZokvN2OwM5HD@ep-autumn-scene-a1izhr9p.ap-southeast-1.aws.neon.tech/neondb?sslmode=require'
+});
+
+// Create table if not exists
+pool.query(`
+  CREATE TABLE IF NOT EXISTS user_typing_data (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    wpm INTEGER,
+    errors INTEGER,
+    incorrect_words INTEGER,
+    correct_words INTEGER,
+    backspace_count INTEGER,
+    accuracy FLOAT,
+    typed_words INTEGER,
+    test_duration INTEGER,
+    test_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`).catch(err => console.error('Error creating table:', err));
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -41,6 +64,22 @@ io.on('connection', (socket) => {
       socket.emit('error', { message: 'Invalid test data' });
     }
   });
+
+socket.on('testCompleted', async (data) => {
+  console.log('Test completed:', data);
+  try {
+    await pool.query(
+      `INSERT INTO user_typing_data 
+       (username, wpm, errors, incorrect_words, correct_words, backspace_count, accuracy, typed_words, test_duration) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [data.username, data.wpm, data.errors, data.incorrectWords, data.correctWords, 
+       data.backspaceCount, data.accuracy, data.typedWords, data.testDuration]
+    );
+    console.log('User data saved to database');
+  } catch (err) {
+    console.error('Error saving user data:', err);
+  }
+});
 
   socket.on('disconnect', () => {
     console.log('User disconnected', socket.id);

@@ -907,12 +907,7 @@
     </div>
 
     <script>
-        // Sample lesson paragraphs
-        const lessonParagraphs = {
-            "1": "This is a sample paragraph for lesson 1. Type this text as accurately and quickly as you can.",
-            "2": "Here's another paragraph for lesson 2. Practice your typing skills with this text.",
-            "3": "The final lesson paragraph is here. Keep improving your speed and accuracy."
-        };
+
 
         const textDisplay = document.getElementById("text-display");
         const userInput = document.getElementById("user-input");
@@ -969,8 +964,26 @@
             userInput.disabled = false;
         }
 
+        function sendTestResults() {
+            const username = localStorage.getItem('username');
+            if (username) {
+                const testData = {
+                    username: username,
+                    wpm: parseInt(document.getElementById('wpm').textContent),
+                    errors: parseInt(document.getElementById('errors').textContent),
+                    incorrectWords: parseInt(document.getElementById('incorrect-words').textContent),
+                    correctWords: parseInt(document.getElementById('correct-words').textContent),
+                    backspaceCount: parseInt(document.getElementById('backspace-count').textContent),
+                    accuracy: parseFloat(document.getElementById('accuracy').textContent),
+                    typedWords: parseInt(document.getElementById('typed-words').textContent),
+                    testDuration: 60 - parseInt(document.getElementById('time-left').textContent)
+                };
 
+                socket.emit('testCompleted', testData);
+            }
+        }
 
+        // When the test ends
 
         function initTest() {
             clearInterval(timer);
@@ -1032,7 +1045,23 @@
                 timeLeft.textContent = timeRemaining;
             }
         }
+        document.addEventListener('DOMContentLoaded', function () {
+            let username = localStorage.getItem('username');
+            if (!username) {
+                username = prompt('Please enter your username:');
+                if (username) {
+                    localStorage.setItem('username', username);
+                }
+            }
+            if (username) {
+                document.querySelector('.user-info').innerHTML = `Welcome, ${username} <a href="#" class="login-btn" onclick="logout()">Logout</a>`;
+            }
+        });
 
+        function logout() {
+            localStorage.removeItem('username');
+            location.reload();
+        }
         function startTimer() {
             startTime = new Date();
             timer = setInterval(() => {
@@ -1289,6 +1318,7 @@
             );
 
             userInput.removeEventListener("input", handleKeyDown);
+            sendTestResults();
         }
 
         function handleKeyDown(e) {
