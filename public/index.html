@@ -851,26 +851,7 @@
         <main class="typing-area">
             <header class="test-header">
                 <div class="test-config">
-                    <div class="config-item">
-                        <label for="time-input">Duration:</label>
-                        <input type="number" id="time-input" min="10" max="3600" value="300" />
-                        <span id="time-unit">seconds</span>
-                    </div>
-                    <div class="config-item">
-                        <label for="lesson-select">Lesson:</label>
-                        <select id="lesson-select">
-                            <option value="1">Lesson 1</option>
-                            <option value="2">Lesson 2</option>
-                            <option value="3">Lesson 3</option>
-                        </select>
-                    </div>
-                    <div class="config-item">
-                        <label for="backspace-toggle">Backspace:</label>
-                        <label class="switch">
-                            <input type="checkbox" id="backspace-toggle" />
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
+
                     <div class="config-item">
                         <button id="reset-btn" class="reset-btn">
                             <i class="fas fa-redo-alt"></i>
@@ -939,12 +920,6 @@
         const wpmDisplay = document.getElementById("wpm");
         const errorsDisplay = document.getElementById("errors");
         const resetBtn = document.getElementById("reset-btn");
-        const timeInput = document.getElementById("time-input");
-        const timeUnit = document.getElementById("time-unit");
-        const backspaceToggle = document.getElementById("backspace-toggle");
-        const lessonSelect = document.getElementById("lesson-select");
-
-
 
 
         let timer;
@@ -994,24 +969,8 @@
             userInput.disabled = false;
         }
 
-        function updateTimeUnit() {
-            const value = parseInt(timeInput.value) || 300;
-            if (value >= 3600) {
-                timeUnit.textContent = "hour";
-                timeInput.step = "1";
-                timeInput.max = "24";
-            } else {
-                timeUnit.textContent = "seconds";
-                timeInput.step = "10";
-                timeInput.max = "3590";
-            }
-            timeInput.value = Math.min(Math.max(value, 10), parseInt(timeInput.max));
-            initTest();
-        }
 
-        function getRandomParagraph(lesson) {
-            return lessonParagraphs[lesson];
-        }
+
 
         function initTest() {
             clearInterval(timer);
@@ -1034,7 +993,6 @@
             document.getElementById("word-count").textContent = totalWords;
 
             updateTimerDisplay();
-            backspaceToggle.checked = false;
             typedCharacters = 0;
             errors = 0;
             currentWordIndex = 0;
@@ -1054,7 +1012,6 @@
             userInput.value = "";
             userInput.focus();
 
-            // Disable user input until the test starts
             userInput.disabled = true;
 
             handleResponsiveLayout();
@@ -1282,21 +1239,13 @@
         }
 
         userInput.addEventListener("input", handleKeyDown);
-        userInput.addEventListener("keydown", (e) => {
-            if (e.key === "Backspace" && !backspaceToggle.checked) {
-                const inputValue = e.target.value;
-                const words = inputValue.split(" ");
-                if (words[currentWordIndex] === "" && currentWordIndex > 0) {
-                    e.preventDefault();
-                }
-            }
-        });
+
 
         resetBtn.addEventListener("click", () => {
             initTest();
             userInput.focus();
         });
-        lessonSelect.addEventListener("change", initTest);
+
 
         window.addEventListener("load", handleResponsiveLayout);
         window.addEventListener("resize", handleResponsiveLayout);
@@ -1308,7 +1257,7 @@
         });
 
         // Initialize the test when the page loads
-        updateTimeUnit();
+
         initTest();
 
         // Hamburger menu functionality
@@ -1345,17 +1294,6 @@
             });
         });
 
-        timeInput.addEventListener("change", () => {
-            let value = parseInt(timeInput.value) || 600;
-            if (timeUnit.textContent === "hour") {
-                value = Math.min(Math.max(value, 1), 24);
-            } else {
-                value = Math.min(Math.max(value, 10), 3590);
-            }
-            timeInput.value = value;
-            updateTimeUnit();
-            initTest();
-        });
     </script>
 </body>
 

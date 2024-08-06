@@ -179,12 +179,20 @@
                 timeRemaining = data.duration;
                 initTest();
                 userInput.focus();
-                alert('The test has been started by the admin!');
+                alert('The test has been started by the admin. Click OK to begin!');
+                startTest(); // Add this line to start the test after the alert
             } else {
                 console.error('Invalid data received from server:', data);
                 alert('An error occurred while starting the test. Please try again.');
             }
         });
+
+        function startTest() {
+            isTestActive = true;
+            startTime = new Date();
+            startTimer();
+            userInput.disabled = false;
+        }
 
         function updateTimeUnit() {
             const value = parseInt(timeInput.value) || 300;
@@ -246,8 +254,8 @@
             userInput.value = "";
             userInput.focus();
 
-            // Enable user input only when the test has started
-            userInput.disabled = !testStarted;
+            // Disable user input until the test starts
+            userInput.disabled = true;
 
             handleResponsiveLayout();
         }
@@ -312,19 +320,19 @@
             const modal = document.createElement("div");
             modal.className = "modal";
             modal.innerHTML = `
-                <div class="modal-content">
-                    <h2>Test Results</h2>
-                    <p>Words per minute: ${wpm}</p>
-                    <p>Accuracy: ${accuracy}%</p>
-                    <p>Errors: ${errors}</p>
-                    <p>Backspaces: ${backspaces}</p>
-                    <p>Correct Words: ${correctWords}</p>
-                    <p>Incorrect Words: ${incorrectWords}</p>
-                    <p>Typed Words: ${typedWords}</p>
-                    <p>Total Paragraph Words: ${totalWords}</p>
-                    <button id="close-modal">Close</button>
-                    <button id="download-pdf">Download PDF</button>
-                </div>`;
+                    <div class="modal-content">
+                        <h2>Test Results</h2>
+                        <p>Words per minute: ${wpm}</p>
+                        <p>Accuracy: ${accuracy}%</p>
+                        <p>Errors: ${errors}</p>
+                        <p>Backspaces: ${backspaces}</p>
+                        <p>Correct Words: ${correctWords}</p>
+                        <p>Incorrect Words: ${incorrectWords}</p>
+                        <p>Typed Words: ${typedWords}</p>
+                        <p>Total Paragraph Words: ${totalWords}</p>
+                        <button id="close-modal">Close</button>
+                        <button id="download-pdf">Download PDF</button>
+                    </div>`;
             document.body.appendChild(modal);
             modal.style.display = "flex";
 
@@ -374,15 +382,9 @@
         }
 
         function handleKeyDown(e) {
-            if (!testStarted) {
+            if (!testStarted || !isTestActive) {
                 e.preventDefault();
                 return;
-            }
-
-            if (!isTestActive && timeRemaining > 0) {
-                isTestActive = true;
-                startTime = new Date();
-                startTimer();
             }
 
             if (isTestActive && timeRemaining > 0) {
@@ -443,6 +445,9 @@
                 updateStats();
             }
         }
+
+
+
         userInput.disabled = true;
         function isWordNearBottom(wordElement) {
             const textDisplayRect = textDisplay.getBoundingClientRect();
