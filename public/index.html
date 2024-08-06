@@ -1104,11 +1104,164 @@
         }
 
         function generatePDF(wpm, errors, backspaces, accuracy, correctWords, incorrectWords, typedWords, totalWords) {
-            const { jsPDF } = window.jspdf;
+            const {
+                jsPDF
+            } = window.jspdf;
             const doc = new jsPDF();
 
-            // i will do my self
+            // Set font styles
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(20);
+            doc.setTextColor(44, 62, 80); // Dark blue color
 
+            // Add title
+            doc.text("Typing Test Results", 105, 20, null, null, "center");
+
+            // Add user information
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(12);
+            doc.setTextColor(52, 73, 94); // Slightly lighter blue
+
+
+            doc.text(`Test Date: ${new Date().toLocaleString()}`, 20, 60);
+
+            // Add horizontal line
+            doc.setDrawColor(189, 195, 199); // Light gray color
+            doc.line(20, 70, 190, 70);
+
+            // Add test statistics
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.setTextColor(44, 62, 80);
+            doc.text("Test Statistics", 20, 85);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(12);
+            doc.setTextColor(52, 73, 94);
+
+            const stats = [
+                [`Words per minute: ${wpm}`, `Accuracy: ${accuracy}%`],
+                [`Errors: ${errors}`, `Backspaces: ${backspaces}`],
+                [`Correct Words: ${correctWords}`, `Incorrect Words: ${incorrectWords}`],
+                [`Typed Words: ${typedWords}`, `Total Paragraph Words: ${totalWords}`]
+            ];
+
+            let yPos = 95;
+            stats.forEach(row => {
+                doc.text(row[0], 25, yPos);
+                doc.text(row[1], 105, yPos);
+                yPos += 10;
+            });
+
+            // Add horizontal line
+            doc.setDrawColor(189, 195, 199);
+            doc.line(20, yPos + 5, 190, yPos + 5);
+
+            // Add mini boxes with labels
+            const boxSize = 5;
+            const boxY = yPos + 15;
+
+            // Red mini box for incorrect words
+            doc.setFillColor(231, 76, 60); // Red color
+            doc.rect(20, boxY, boxSize, boxSize, 'F');
+            doc.setTextColor(52, 73, 94); // Dark text color
+            doc.setFontSize(10);
+            doc.text("Incorrect Words", 28, boxY + boxSize / 2);
+
+            // Green mini box for correct words
+            doc.setFillColor(46, 204, 113); // Green color
+            doc.rect(80, boxY, boxSize, boxSize, 'F');
+            doc.text("Correct Words", 88, boxY + boxSize / 2);
+
+            // Black mini box for skipped words
+            doc.setFillColor(0, 0, 0); // Black color
+            doc.rect(140, boxY, boxSize, boxSize, 'F');
+            doc.text("Skipped Words", 148, boxY + boxSize / 2);
+
+            // Add typed paragraph with highlighted errors and underlined skipped words
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.setTextColor(44, 62, 80);
+            doc.text("Typed Paragraph", 20, boxY + boxSize + 10);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+
+            const words = currentText.split(" ");
+            const inputWords = userInput.value.split(" ");
+            let paragraphYPos = boxY + boxSize + 20;
+            let xPosition = 20;
+            const lineHeight = 5;
+            const maxWidth = 170;
+
+            for (let i = 0; i < words.length; i++) {
+                const correctWord = words[i];
+                const typedWord = inputWords[i] || "";
+
+                if (typedWord === "") {
+                    // Word was skipped, render in black and underline
+                    doc.setTextColor(0, 0, 0);
+                    const wordWidth = doc.getTextWidth(correctWord + " ");
+
+                    if (xPosition + wordWidth > 20 + maxWidth) {
+                        paragraphYPos += lineHeight;
+                        xPosition = 20;
+                    }
+
+                    doc.text(correctWord + " ", xPosition, paragraphYPos);
+                    doc.line(xPosition, paragraphYPos + 1, xPosition + wordWidth - 1, paragraphYPos + 1);
+                    xPosition += wordWidth;
+                } else if (typedWord === correctWord) {
+                    doc.setTextColor(46, 204, 113); // Green for correct words
+                    const wordWidth = doc.getTextWidth(typedWord + " ");
+
+                    if (xPosition + wordWidth > 20 + maxWidth) {
+                        paragraphYPos += lineHeight;
+                        xPosition = 20;
+                    }
+
+                    doc.text(typedWord + " ", xPosition, paragraphYPos);
+                    xPosition += wordWidth;
+                } else {
+                    doc.setTextColor(231, 76, 60); // Red for incorrect words
+                    const wordWidth = doc.getTextWidth(typedWord + " ");
+
+                    if (xPosition + wordWidth > 20 + maxWidth) {
+                        paragraphYPos += lineHeight;
+                        xPosition = 20;
+                    }
+
+                    doc.text(typedWord + " ", xPosition, paragraphYPos);
+                    xPosition += wordWidth;
+                }
+            }
+
+            // Add original paragraph
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.setTextColor(44, 62, 80);
+            doc.text("Original Paragraph", 20, paragraphYPos + lineHeight * 3);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.setTextColor(52, 73, 94);
+
+            let originalParagraphYPos = paragraphYPos + lineHeight * 4;
+            xPosition = 20;
+
+            const splitText = doc.splitTextToSize(currentText, maxWidth);
+            splitText.forEach(line => {
+                doc.text(line, xPosition, originalParagraphYPos);
+                originalParagraphYPos += lineHeight;
+            });
+
+            // Add footer
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(10);
+            doc.setTextColor(127, 140, 141);
+            doc.text("Generated by TypeMaster - Improve your typing skills!", 105, 285, null, null, "center");
+
+            // Save the PDF
             doc.save("typing_test_results.pdf");
         }
 
