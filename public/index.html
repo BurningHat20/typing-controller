@@ -423,6 +423,18 @@
             transition: background-color 0.3s;
         }
 
+        #leaderboard-link {
+            text-decoration: none;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
         #guj-type {
             margin-top: 15px;
             padding: 10px 20px;
@@ -837,12 +849,12 @@
                 </ul>
                 <div class="responsive-user-info">
                     <span>Welcome, User</span>
-                    <a href="#" class="login-btn">Logout</a>
+                    <a href="#" class="login-btn" onclick="logout()">Logout</a>
                 </div>
             </nav>
             <div class="user-info">
                 <span>Welcome, User</span>
-                <a href="#" class="login-btn">Logout</a>
+                <a href="#" class="login-btn" onclick="logout()">Logout</a>
             </div>
         </div>
     </header>
@@ -935,7 +947,28 @@
         let testStarted = false;
 
         console.log('Socket connection established');
+        socket.on('leaderboardUpdate', (leaderboardData) => {
+            // Update the leaderboard display with the new data
+            updateLeaderboardDisplay(leaderboardData);
+        });
 
+        function updateLeaderboardDisplay(leaderboardData) {
+            const leaderboardElement = document.getElementById('leaderboard');
+            if (leaderboardElement) {
+                leaderboardElement.innerHTML = ''; // Clear existing data
+                leaderboardData.forEach((entry, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${entry.username}</td>
+                <td>${entry.max_wpm}</td>
+                <td>${parseFloat(entry.avg_accuracy).toFixed(2)}%</td>
+                <td>${entry.tests_taken}</td>
+            `;
+                    leaderboardElement.appendChild(row);
+                });
+            }
+        }
 
         socket.on('connect', () => {
             console.log('Connected to server');
@@ -980,10 +1013,18 @@
                 };
 
                 socket.emit('testCompleted', testData);
+                socket.emit('requestLeaderboard'); // Add this line to request updated leaderboard data
             }
         }
-
+        socket.on('requestLeaderboard', async () => {
+            await updateLeaderboard();
+        });
         // When the test ends
+
+
+        function requestInitialLeaderboardData() {
+            socket.emit('requestLeaderboard');
+        }
 
         function initTest() {
             clearInterval(timer);
@@ -1055,13 +1096,16 @@
             }
             if (username) {
                 document.querySelector('.user-info').innerHTML = `Welcome, ${username} <a href="#" class="login-btn" onclick="logout()">Logout</a>`;
+
+                // Emit userJoined event
+                socket.emit('userJoined', username);
             }
+
+            requestInitialLeaderboardData();
         });
 
-        function logout() {
-            localStorage.removeItem('username');
-            location.reload();
-        }
+
+
         function startTimer() {
             startTime = new Date();
             timer = setInterval(() => {
@@ -1101,24 +1145,32 @@
             document.getElementById("incorrect-words").textContent = incorrectWords;
             document.getElementById("typed-words").textContent = typedWords;
         }
-
+        function logout() {
+            const username = localStorage.getItem('username');
+            if (username) {
+                socket.emit('userLogout', { username: username });
+                localStorage.removeItem('username');
+                location.reload();
+            }
+        }
         function showResultPopup(wpm, errors, backspaces, accuracy, correctWords, incorrectWords, typedWords, totalWords) {
             const modal = document.createElement("div");
             modal.className = "modal";
             modal.innerHTML = `
-                <div class="modal-content">
-                    <h2>Test Results</h2>
-                    <p>Words per minute: ${wpm}</p>
-                    <p>Accuracy: ${accuracy}%</p>
-                    <p>Errors: ${errors}</p>
-                    <p>Backspaces: ${backspaces}</p>
-                    <p>Correct Words: ${correctWords}</p>
-                    <p>Incorrect Words: ${incorrectWords}</p>
-                    <p>Typed Words: ${typedWords}</p>
-                    <p>Total Paragraph Words: ${totalWords}</p>
-                    <button id="close-modal">Close</button>
-                    <button id="download-pdf">Download PDF</button>
-                </div>`;
+        <div class="modal-content">
+            <h2>Test Results</h2>
+            <p>Words per minute: ${wpm}</p>
+            <p>Accuracy: ${accuracy}%</p>
+            <p>Errors: ${errors}</p>
+            <p>Backspaces: ${backspaces}</p>
+            <p>Correct Words: ${correctWords}</p>
+            <p>Incorrect Words: ${incorrectWords}</p>
+            <p>Typed Words: ${typedWords}</p>
+            <p>Total Paragraph Words: ${totalWords}</p>
+            <button id="close-modal">Close</button>
+            <button id="download-pdf">Download PDF</button>
+            <a id="leaderboard-link" href="/leaderboard" target="_blank">View Leaderboard</a>
+        </div>`;
             document.body.appendChild(modal);
             modal.style.display = "flex";
 
@@ -1131,7 +1183,6 @@
                 generatePDF(wpm, errors, backspaces, accuracy, correctWords, incorrectWords, typedWords, totalWords);
             });
         }
-
         function generatePDF(wpm, errors, backspaces, accuracy, correctWords, incorrectWords, typedWords, totalWords) {
             const {
                 jsPDF

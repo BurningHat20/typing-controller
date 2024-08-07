@@ -10,37 +10,21 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
+            box-sizing: border-box;
         }
 
         .container {
-            background-color: #fff;
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 500px;
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 20px;
         }
 
-        textarea,
-        input[type="number"] {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            resize: vertical;
+        div {
+            margin-bottom: 15px;
         }
 
         label {
@@ -48,13 +32,20 @@
             margin-bottom: 5px;
         }
 
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
         button {
+            display: block;
             width: 100%;
             padding: 10px;
             background-color: #007bff;
-            color: #fff;
+            color: white;
             border: none;
-            border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
         }
@@ -63,54 +54,106 @@
             background-color: #0056b3;
         }
 
-        @media (max-width: 600px) {
-            .container {
-                padding: 10px;
-            }
+        #connectedUsers {
+            margin-top: 30px;
+        }
 
-            h1 {
-                font-size: 24px;
+        #connectedUsers h2 {
+            text-align: center;
+        }
+
+        #userList {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #userList li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        @media (min-width: 600px) {
+
+            input[type="number"],
+            textarea {
+                width: calc(100% - 20px);
             }
 
             button {
-                font-size: 14px;
+                width: calc(100% - 20px);
+            }
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            div {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                width: 100%;
+                max-width: 600px;
+            }
+
+            button {
+                width: 200px;
+                align-self: center;
             }
         }
     </style>
+    <script src="/socket.io/socket.io.js"></script>
 </head>
 
 <body>
     <div class="container">
         <h1>Admin Panel</h1>
-        <textarea id="paragraphInput" rows="5" cols="50" placeholder="Enter test paragraph"></textarea>
-        <br>
-        <label for="durationInput">Test Duration (seconds):</label>
-        <input type="number" id="durationInput" min="10" max="3600" value="60">
-        <br>
-        <button id="startTestBtn">Start Test</button>
+
+        <div>
+            <label for="testDuration">Test Duration (seconds):</label>
+            <input type="number" id="testDuration" value="60">
+        </div>
+
+        <div>
+            <label for="paragraphInput">Test Paragraph:</label>
+            <textarea id="paragraphInput" rows="5" cols="50"></textarea>
+        </div>
+
+        <button id="startTest">Start Test</button>
+
+        <div id="connectedUsers">
+            <h2>Connected Users</h2>
+            <ul id="userList"></ul>
+        </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        const startTestBtn = document.getElementById('startTestBtn');
-        const paragraphInput = document.getElementById('paragraphInput');
-        const durationInput = document.getElementById('durationInput');
 
-        startTestBtn.addEventListener('click', () => {
-            const paragraph = paragraphInput.value.trim();
-            const duration = parseInt(durationInput.value);
-
-            if (paragraph && duration >= 10 && duration <= 3600) {
-                console.log('Emitting startTest event with data:', { paragraph, duration });
-                socket.emit('startTest', { paragraph, duration });
-                alert('Test started!');
+        document.getElementById('startTest').addEventListener('click', () => {
+            const duration = document.getElementById('testDuration').value;
+            const paragraph = document.getElementById('paragraphInput').value;
+            if (duration && paragraph) {
+                socket.emit('startTest', { duration: parseInt(duration), paragraph });
+                console.log('Sent startTest event:', { duration: parseInt(duration), paragraph });
             } else {
-                alert('Please enter a valid paragraph and duration (10-3600 seconds).');
+                alert('Please enter both duration and paragraph.');
             }
         });
-    </script>
 
+        socket.on('updateConnectedUsers', (users) => {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.textContent = user;
+                userList.appendChild(li);
+            });
+        });
+    </script>
 </body>
 
 </html>
