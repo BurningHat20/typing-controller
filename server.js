@@ -65,7 +65,7 @@ async function getLeaderboardData() {
     FROM user_typing_data
     GROUP BY username
     ORDER BY max_wpm DESC
-    LIMIT 10
+    LIMIT 100
   `);
   return result.rows;
 }
