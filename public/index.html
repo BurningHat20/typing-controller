@@ -1120,7 +1120,7 @@
 
         function calculateAccuracy() {
             if (typedWords === 0) return 0;
-            const baseAccuracy = (typedWords * 100) / window.totalParagraphWords;
+            const baseAccuracy = (correctWords * 100) / window.totalParagraphWords;
             const penaltyFactor = (incorrectWords * 50) / typedWords;
             const accuracy = baseAccuracy - penaltyFactor;
             return Math.max(0, Math.min(100, Math.round(accuracy)));
