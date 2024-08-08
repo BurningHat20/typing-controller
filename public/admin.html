@@ -72,6 +72,12 @@
             border-bottom: 1px solid #ddd;
         }
 
+        #userCount {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
         @media (min-width: 600px) {
 
             input[type="number"],
@@ -126,6 +132,7 @@
 
         <div id="connectedUsers">
             <h2>Connected Users</h2>
+            <div id="userCount"></div>
             <ul id="userList"></ul>
         </div>
     </div>
@@ -146,7 +153,9 @@
 
         socket.on('updateConnectedUsers', (users) => {
             const userList = document.getElementById('userList');
+            const userCount = document.getElementById('userCount');
             userList.innerHTML = '';
+            userCount.textContent = `Total Connected Users: ${users.length}`;
             users.forEach(user => {
                 const li = document.createElement('li');
                 li.textContent = user;
