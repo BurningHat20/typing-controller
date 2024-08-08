@@ -86,7 +86,7 @@ let connectedUsers = new Set();
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-    console.log('A user connected', socket.id);
+  console.log('A user connected', socket.id);
 
   // Add user to connectedUsers when they join
   socket.on('userJoined', (username) => {
@@ -95,19 +95,19 @@ io.on('connection', (socket) => {
     io.emit('updateConnectedUsers', Array.from(connectedUsers));
   });
 
- socket.on('startTest', (data) => {
-        console.log('Received startTest event with data:', data);
-        if (data && data.paragraph && data.duration) {
-            console.log('Emitting testStarted event with data:', data);
-            io.emit('testStarted', {
-                paragraph: data.paragraph,
-                duration: parseInt(data.duration)
-            });
-        } else {
-            console.error('Invalid data received from admin:', data);
-            socket.emit('error', { message: 'Invalid test data' });
-        }
-    });
+  socket.on('startTest', (data) => {
+    console.log('Received startTest event with data:', data);
+    if (data && data.duration && data.paragraph) {
+      console.log('Emitting testStarted event with data:', data);
+      io.emit('testStarted', {
+        paragraph: data.paragraph,
+        duration: parseInt(data.duration)
+      });
+    } else {
+      console.error('Invalid data received from admin:', data);
+      socket.emit('error', { message: 'Invalid test data' });
+    }
+  });
 
   socket.on('testCompleted', async (data) => {
     console.log('Test completed:', data);
@@ -120,7 +120,7 @@ io.on('connection', (socket) => {
          data.backspaceCount, data.accuracy, data.typedWords, data.testDuration]
       );
       console.log('User data saved to database');
-      await updateLeaderboard(); // Update leaderboard after saving data
+      await updateLeaderboard();
     } catch (err) {
       console.error('Error saving user data:', err);
     }
@@ -159,6 +159,26 @@ io.on('connection', (socket) => {
       } catch (err) {
         console.error('Error deleting user data:', err);
       }
+    }
+  });
+
+socket.on('clearAllData', async () => {
+    try {
+      // Clear the database
+      await pool.query('DELETE FROM user_typing_data');
+      console.log('Database cleared');
+
+      // Clear connected users
+      connectedUsers.clear();
+
+      // Emit events to update clients
+      io.emit('updateConnectedUsers', []);
+      io.emit('dataCleared');
+
+      console.log('All data cleared successfully');
+    } catch (err) {
+      console.error('Error clearing data:', err);
+      socket.emit('error', { message: 'Error clearing data' });
     }
   });
 

@@ -5,113 +5,189 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel</title>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #f4f6f8;
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --border-radius: 8px;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
             margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            padding: 20px;
+            color: var(--text-color);
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        h1 {
-            text-align: center;
-        }
-
-        div {
-            margin-bottom: 15px;
+        h1,
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: 600;
         }
 
         input[type="number"],
         textarea {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: var(--border-radius);
             box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="number"]:focus,
+        textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
         }
 
         button {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            background-color: #007bff;
+            background-color: var(--primary-color);
             color: white;
+            padding: 12px 20px;
             border: none;
+            border-radius: var(--border-radius);
             cursor: pointer;
             font-size: 16px;
+            transition: background-color 0.3s ease;
         }
 
         button:hover {
-            background-color: #0056b3;
+            background-color: #2980b9;
+        }
+
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        #timerDisplay {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: var(--primary-color);
+            display: none;
         }
 
         #connectedUsers {
             margin-top: 30px;
         }
 
-        #connectedUsers h2 {
-            text-align: center;
+        #userCount {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-bottom: 15px;
         }
 
         #userList {
             list-style-type: none;
             padding: 0;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: var(--border-radius);
         }
 
         #userList li {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
+            padding: 15px;
+            border-bottom: 1px solid #ecf0f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
         }
 
-        #userCount {
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 10px;
+        #userList li:last-child {
+            border-bottom: none;
         }
 
-        @media (min-width: 600px) {
-
-            input[type="number"],
-            textarea {
-                width: calc(100% - 20px);
-            }
-
-            button {
-                width: calc(100% - 20px);
-            }
+        #userList li:hover {
+            background-color: #f8f9fa;
         }
 
-        @media (min-width: 768px) {
-            .container {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
+        .user-status {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
 
-            div {
-                display: flex;
-                flex-direction: column;
-                align-items: flex-start;
-                width: 100%;
-                max-width: 600px;
-            }
+        .danger-zone {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #ffebee;
+            border-radius: var(--border-radius);
+        }
 
-            button {
-                width: 200px;
-                align-self: center;
-            }
+        .danger-zone h2 {
+            color: #c62828;
+            margin-top: 0;
+        }
+
+        .clear-data-btn {
+            background-color: #c62828;
+        }
+
+        .clear-data-btn:hover {
+            background-color: #b71c1c;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: var(--border-radius);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            margin-left: 10px;
         }
     </style>
-    <script src="/socket.io/socket.io.js"></script>
 </head>
 
 <body>
@@ -119,49 +195,188 @@
         <h1>Admin Panel</h1>
 
         <div>
-            <label for="testDuration">Test Duration (seconds):</label>
-            <input type="number" id="testDuration" value="60">
+            <label for="testDuration">Test Duration (minutes):</label>
+            <input type="number" id="testDuration" value="1" min="1" max="60">
         </div>
 
         <div>
-            <label for="paragraphInput">Test Paragraph:</label>
-            <textarea id="paragraphInput" rows="5" cols="50"></textarea>
+            <label for="testParagraph">Test Paragraph:</label>
+            <textarea id="testParagraph" rows="4" placeholder="Enter the test paragraph here..."></textarea>
         </div>
 
-        <button id="startTest">Start Test</button>
+        <button id="startTestBtn">Start Test</button>
+
+        <div id="timerDisplay"></div>
 
         <div id="connectedUsers">
             <h2>Connected Users</h2>
             <div id="userCount"></div>
             <ul id="userList"></ul>
         </div>
+
+        <div class="danger-zone">
+            <h2>Danger Zone</h2>
+            <button id="clearDataBtn" class="clear-data-btn">Clear All Data</button>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Data Deletion</h2>
+            <p>Are you sure you want to clear all data? This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button id="cancelClearBtn">Cancel</button>
+                <button id="confirmClearBtn" class="clear-data-btn">Clear All Data</button>
+            </div>
+        </div>
     </div>
 
     <script>
         const socket = io();
+        const startTestBtn = document.getElementById('startTestBtn');
+        const testDuration = document.getElementById('testDuration');
+        const testParagraph = document.getElementById('testParagraph');
+        const userCount = document.getElementById('userCount');
+        const userList = document.getElementById('userList');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const clearDataBtn = document.getElementById('clearDataBtn');
+        const confirmModal = document.getElementById('confirmModal');
+        const cancelClearBtn = document.getElementById('cancelClearBtn');
+        const confirmClearBtn = document.getElementById('confirmClearBtn');
 
-        document.getElementById('startTest').addEventListener('click', () => {
-            const duration = document.getElementById('testDuration').value;
-            const paragraph = document.getElementById('paragraphInput').value;
-            if (duration && paragraph) {
-                socket.emit('startTest', { duration: parseInt(duration), paragraph });
-                console.log('Sent startTest event:', { duration: parseInt(duration), paragraph });
+        let remainingTime = 0;
+        let timerInterval;
+
+        // Load saved data from local storage
+        function loadSavedData() {
+            const savedDuration = localStorage.getItem('testDuration');
+            const savedParagraph = localStorage.getItem('testParagraph');
+            const savedUsers = JSON.parse(localStorage.getItem('connectedUsers')) || [];
+
+            if (savedDuration) testDuration.value = savedDuration;
+            if (savedParagraph) testParagraph.value = savedParagraph;
+            updateUserList(savedUsers);
+        }
+
+        // Save data to local storage
+        function saveData() {
+            localStorage.setItem('testDuration', testDuration.value);
+            localStorage.setItem('testParagraph', testParagraph.value);
+        }
+
+        // Update user list and save to local storage
+        function updateUserList(users) {
+            userCount.textContent = `Total users: ${users.length}`;
+            userList.innerHTML = users.map(user => `
+        <li>
+            <span>${user}</span>
+            <span class="user-status">Active</span>
+        </li>
+    `).join('');
+            localStorage.setItem('connectedUsers', JSON.stringify(users));
+        }
+
+        // Start the test
+        startTestBtn.addEventListener('click', () => {
+            const durationInMinutes = parseInt(testDuration.value);
+            const paragraph = testParagraph.value.trim();
+
+            if (durationInMinutes > 0 && paragraph) {
+                const durationInSeconds = durationInMinutes * 60;
+                socket.emit('startTest', { duration: durationInSeconds, paragraph });
+                startTimer(durationInSeconds);
+                startTestBtn.disabled = true;
+                saveData();
             } else {
-                alert('Please enter both duration and paragraph.');
+                alert('Please enter a valid duration and paragraph.');
             }
         });
 
-        socket.on('updateConnectedUsers', (users) => {
-            const userList = document.getElementById('userList');
-            const userCount = document.getElementById('userCount');
-            userList.innerHTML = '';
-            userCount.textContent = `Total Connected Users: ${users.length}`;
-            users.forEach(user => {
-                const li = document.createElement('li');
-                li.textContent = user;
-                userList.appendChild(li);
-            });
+        // Start timer function
+        function startTimer(duration) {
+            remainingTime = duration;
+            timerDisplay.style.display = 'block';
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                remainingTime--;
+                updateTimerDisplay();
+
+                if (remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    startTestBtn.disabled = false;
+                    timerDisplay.style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        // Update timer display
+        function updateTimerDisplay() {
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            timerDisplay.textContent = `Time Remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Clear all data
+        function clearAllData() {
+            // Clear local storage
+            localStorage.clear();
+
+            // Reset form fields
+            testDuration.value = '1';
+            testParagraph.value = '';
+
+            // Clear user list
+            updateUserList([]);
+
+            // Emit event to clear server-side data
+            socket.emit('clearAllData');
+
+            // Hide modal
+            confirmModal.style.display = 'none';
+
+            // We'll show the alert after receiving confirmation from the server
+        }
+
+        // Event listeners for clear data functionality
+        clearDataBtn.addEventListener('click', () => {
+            confirmModal.style.display = 'block';
         });
+
+        cancelClearBtn.addEventListener('click', () => {
+            confirmModal.style.display = 'none';
+        });
+
+        confirmClearBtn.addEventListener('click', clearAllData);
+
+        // Close modal if clicked outside
+        window.onclick = function (event) {
+            if (event.target == confirmModal) {
+                confirmModal.style.display = 'none';
+            }
+        }
+
+        // Socket event listeners
+        socket.on('updateConnectedUsers', (users) => {
+            updateUserList(users);
+        });
+
+        socket.on('dataCleared', () => {
+            console.log('Server-side data has been cleared.');
+            alert('All data has been cleared successfully, including database records.');
+        });
+
+        socket.on('error', (error) => {
+            console.error('Server error:', error);
+            alert(`An error occurred: ${error.message}`);
+        });
+
+        // Save data when input changes
+        testDuration.addEventListener('input', saveData);
+        testParagraph.addEventListener('input', saveData);
+
+        // Load saved data on page load
+        loadSavedData();;
     </script>
 </body>
 
